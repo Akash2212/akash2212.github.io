@@ -8,6 +8,7 @@ function createChatLists() {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             myId = user.uid;
+            console.log(myId);
         }
     });
 

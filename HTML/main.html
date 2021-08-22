@@ -26,7 +26,6 @@
                 <input class="searchbox" type="text" name="searchBox" placeholder="Search here..">
             </div>
             <div class="tabs">
-                <button class="tabLinks" onclick="openContent(event,'home')">Home</button>
                 <button class="tabLinks" onclick="openContent(event,'chats')">Chats</button>
                 <button class="tabLinks" onclick="openContent(event,'orders')">Orders</button>
                 <button class="tabLinks" id="defaultOpen" onclick="openContent(event,'products')">Products</button>
@@ -41,10 +40,6 @@
         </div>
         <div id="middleContainer">
 
-            <div id="home" class="tabContent">
-
-                Home
-            </div>
             <div id="chats" class="tabContent">
             </div>
             <div id="message" class="tabContent">
@@ -78,15 +73,60 @@
             </div>
             <div id="products" class="tabContent">
 
-                <div id="productsView">Hello</div>
 
-                <button id="plus" onclick="openFile(dispFile)"><i class="fa fa-plus" style="font-size:36px; color: white;"></i> </button>
+                <!-- <div id="CategoryAndImageView">
+                    <div id="categoryNameView">
+                        <p id="categoryName">Animal</p>
+                    </div>
+
+                    <div id="imagesView">
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                    </div>
+
+                </div>
+
+                <div id="CategoryAndImageView">
+                    <div id="categoryNameView">
+                        <p id="categoryName">Climate</p>
+                    </div>
+
+                    <div id="imagesView">
+                        <div id="imageView"><img class="image" src="../Images/animal.jpeg"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                        <div id="imageView"><img class="image" src="../Images/logo.png"></div>
+                    </div> -->
 
             </div>
-        </div>
-        <div class="lastContainer">
+            <button id="plus"><i class="fa fa-plus" style="font-size:36px; color: white;"></i> </button>
+
+            <div id="myModal" class="modal">
+                <div class="modal-content">
+                    <div>
+                        <input id="productCategory" type="text" placeholder="Enter your product's category">
+                        <input id="productName" type="text" placeholder="Enter your product's name">
+                    </div>
+                    <div id="uploadImageView" onclick="openFile(dispFile)">
+                        <p id="clickHere">Click here to add your products</p>
+                        <img id="productImage" alt="ProductImage">
+                    </div>
+                    <button id="upload" class="close">Upload</button>
+                </div>
+
+            </div>
 
         </div>
+    </div>
+    <div class="lastContainer">
+
+    </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-app.js"></script>
@@ -101,9 +141,9 @@
     <script type="text/javascript " src="../JS/scripts.js "></script>
 
     <script>
-        function dispFile(contents) {
-            document.getElementById('productsView').innerHTML = contents
-        }
+        var userId;
+
+        function dispFile(contents) {}
 
         function clickElem(elem) {
             // Thx user1601638 on Stack Overflow (6/6/2018 - https://stackoverflow.com/questions/13405129/javascript-create-and-save-file )
@@ -117,28 +157,65 @@
             readFile = function(e) {
 
                 var file = e.target.files[0];
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (user) {
-                        var ref = firebase.storage().ref();
-                        var storageRef = ref.child("Images/" + user.uid + "/product.jpg");
-                        storageRef.put(file).then((snapshot) => {
-                            console.log("File uploaded successfully");
-                        })
-                    }
+
+                var productImage = document.getElementById("productImage");
+                var clickHere = document.getElementById("clickHere");
+                var productCategory = document.getElementById("productCategory");
+                var productName = document.getElementById("productName");
+
+                var upload = document.getElementById("upload");
+                upload.addEventListener("click", function(e) {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (user) {
+
+                            userId = user.uid;
+                            var pC = productCategory.value;
+                            var pN = productName.value;
+                            var id = 0;
+
+                            var ref = firebase.storage().ref();
+                            var storageRef = ref.child("Products/" + user.uid + "/" + pC + "/" + pN + ".jpg ");
+                            storageRef.put(file).then((snapshot) => {
+                                console.log("File uploaded successfully");
+                                storageRef.getDownloadURL().then((foundURL) => {
+                                    console.log(foundURL)
+                                    var databaseRef1 = firebase.database().ref("Products/");
+                                    var databaseRef2 = databaseRef1.child(userId + "/" + pC);
+                                    var databaseRef3 = databaseRef2.push();
+                                    databaseRef3.set({
+                                        url: foundURL
+                                    }, (error) => {
+                                        console.log(error)
+                                    });
+
+                                });
+
+
+                            });
+
+
+                        }
+                    });
+
                 });
 
-                console.log(file)
                 if (!file) {
                     return;
                 }
                 var reader = new FileReader();
                 reader.onload = function(e) {
 
-                    var contents = e.target.result;
-                    fileInput.func(contents)
-                    document.getElementById("plus").removeChild(fileInput)
-                }
-                reader.readAsText(file)
+                        var contents = e.target.result;
+                        var dataURL = reader.result;
+
+                        productImage.style.display = "block";
+                        clickHere.style.display = "none"
+                        productImage.src = dataURL;
+                        fileInput.func(contents)
+                        document.getElementById("plus").removeChild(fileInput)
+                    }
+                    //reader.readAsText(file)
+                reader.readAsDataURL(e.target.files[0]);
             }
             fileInput = document.createElement("input")
             fileInput.type = 'file'
@@ -151,6 +228,39 @@
         }
 
 
+        var settingsDiv = document.getElementById("settingsDiv");
+        settingsDiv.addEventListener('click', function(event) {
+            firebase.auth().signOut()
+                .then((e) => {
+                    console.log("Logged out");
+                });
+        });
+
+
+        var modal = document.getElementById("myModal");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("plus");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal 
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
 
         // var plus = document.getElementById("plus");
         // var fileInput = document.createElement("input");
@@ -159,6 +269,138 @@
         // fileInput.style.display = "block";
         // //fileInput.onchange = ;
         // plus.appendChild(fileInput);
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                var products = document.getElementById("products");
+
+                var databaseRef = firebase.database().ref("Products/" + user.uid);
+
+
+                databaseRef.on("value", function(snapshot) {
+                    // console.log(snapshot.val())
+
+                    snapshot.forEach(function(childSnapshot) {
+                        console.log("Number of category " + childSnapshot.numChildren())
+
+                        var categoryAndImageView = document.createElement("div");
+                        var categoryNameView = document.createElement("div");
+                        var categoryName = document.createElement("p");
+                        var imagesView = document.createElement("div");
+
+                        categoryAndImageView.setAttribute("id", "categoryAndImageView");
+                        categoryNameView.setAttribute("id", "categoryNameView");
+                        categoryName.setAttribute("id", "categoryName");
+                        imagesView.setAttribute("id", "imagesView");
+
+                        childSnapshot.forEach(function(nestedSnapshot) {
+                            console.log("Number of products in " + childSnapshot.key + " " + nestedSnapshot.numChildren())
+                            var imageView = document.createElement("div");
+                            var image = document.createElement("img");
+
+                            imageView.setAttribute("id", "imageView");
+                            image.setAttribute("class", "image");
+
+                            image.src = nestedSnapshot.val().url;
+
+                            categoryName.innerHTML = childSnapshot.key;
+
+                            imageView.appendChild(image);
+                            imagesView.appendChild(imageView);
+                        });
+
+
+                        categoryNameView.appendChild(categoryName);
+                        categoryAndImageView.appendChild(categoryNameView)
+                        categoryAndImageView.appendChild(imagesView);
+                        products.appendChild(categoryAndImageView);
+                    });
+
+                });
+            }
+        });
+
+
+
+
+        /*
+
+        var products = document.getElementById("products");
+        var imagesView = document.getElementById("imagesView");
+        var databaseRef = firebase.database().ref("Products");
+
+        databaseRef.on("value", function(snapshot) {
+            console.log(snapshot.numChildren())
+
+
+            for (var i = 0; i < snapshot.numChildren(); i++) {
+
+
+                var compName = document.createElement("p");
+
+
+
+
+
+                snapshot.forEach(function(childSnapshot) {
+
+                    if ((childSnapshot.val().user).localeCompare(userId)) {
+
+
+                        var imageView = document.createElement("div");
+                        var image = document.createElement("img");
+                        compName.innerHTML = childSnapshot.val().productName;
+
+
+                        image.setAttribute("class", "image");
+                        imageView.setAttribute("id", "imageView");
+                        image.src = childSnapshot.val().url;
+
+                        imageView.appendChild(compName);
+
+                        imageView.appendChild(image);
+                        imagesView.appendChild(imageView);
+                        products.appendChild(imagesView);
+                        //imagesArray.push(childSnapshot.val().url);
+
+                    }
+                });
+            }
+
+        });
+
+
+
+        var databaseRef = firebase.database().ref("Products");
+        var count = 0;
+
+        databaseRef.endAt().limitToLast(1).on("child_added", function(snapshot) {
+
+            if (count >= 1) {
+                console.log(snapshot.val().user)
+                console.log("inside child added")
+                if ((snapshot.val().user).localeCompare(userId)) {
+
+                    var image = document.createElement("img");
+
+                    image.setAttribute("class", "image");
+
+                    image.src = snapshot.val().url;
+
+                    imagesView.appendChild(image);
+                    products.appendChild(imagesView);
+                }
+            }
+
+
+            count += 1;
+        });
+
+
+*/
+
+
+        //sf
     </script>
 
 </body>

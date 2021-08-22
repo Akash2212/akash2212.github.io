@@ -131,7 +131,8 @@ nav {
     width: 100px;
     height: 100px;
     padding: 5px;
-    background-color: #2ca;
+    background-color: #2ca7e0;
+    cursor: pointer;
 }
 
 .productImages:hover {
