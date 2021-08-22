@@ -39,16 +39,16 @@
             var password = document.getElementById("passw").value;
 
             firebase.auth().onAuthStateChanged((user) => {
-                //window.open("main.html");
+                
                 if(user)
                 {
+                    window.open("main.html");
                     console.log("signed in");
                     console.log(user);
                 }
             });
 
             firebase.auth().signInWithEmailAndPassword(email, password)
-
             .catch((error) => {
                 console.log("Authentication failed");
             });
